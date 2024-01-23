@@ -67,34 +67,15 @@ function downloadVideo(id: string): any {
 				quality: "highestaudio",
 			});
 			mkdirSync("./audio/", { recursive: true });
-			mkdirSync("./video/", { recursive: true });
-			const rs = createWriteStream(`./video/${id}.mp4`);
-			let bytes = 0;
-			stream.pipe(rs);
-			stream.on("data", (chunk) => {
-				bytes += chunk.length;
-				if (bytes % 10 !== 0) {
-					process.stdout.write(
-						`\r  > Downloaded ${bytes.toLocaleString()} bytes`,
-					);
-				}
-			});
-			stream.on("end", () => {
-				const start = Date.now();
-				console.log("\n> Converting to MP3");
-				ffmpeg(`./video/${id}.mp4`)
-					.audioBitrate(128)
-					.save(`./audio/${id}.mp3`)
-					.on("progress", (p: any) => {
-						process.stdout.write(
-							`\r  > ${p.currentKbps}kbps | ${p.percent.toFixed(2)}% Completed`,
-						);
-					})
-					.on("end", () => {
-						console.log(`\ndone, took ${(Date.now() - start) / 1000}s`);
-						resolve();
-					});
-			});
+			ffmpeg(stream)
+				.audioBitrate(128)
+				.save(`./audio/${id}.mp3`)
+				.on("progress", (p) => {
+					process.stdout.write(`\r${p.targetSize}kb downloaded`);
+				})
+				.on("end", () => {
+					resolve();
+				});
 		} catch (e) {
 			reject(e);
 		}
@@ -110,10 +91,10 @@ async function transcribeAudio(id: string): Promise<void> {
 				`./audio/${id}.mp3`,
 				"--output_format",
 				"all",
-        "--device",
-        "cuda",
-        "--compute_type",
-        "fp16",
+				"--device",
+				"cuda",
+				"--compute_type",
+				"fp16",
 				"--output_dir",
 				"transcribed",
 				"--model",
