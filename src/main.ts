@@ -85,6 +85,33 @@ function downloadVideo(id: string): any {
 async function transcribeAudio(id: string): Promise<void> {
 	await new Promise((resolve, reject) => {
 		console.log("> Starting Transcription Process");
+		console.log(
+			"whisperx",
+			[
+				`./audio/${id}.mp3`,
+				"--output_format",
+				"all",
+				"--device",
+				"cuda",
+				// "--compute_type",
+				// "float16",
+				"--output_dir",
+				"transcribed",
+				"--model",
+				"medium",
+				"--diarize",
+				"--highlight_words",
+				"True",
+				"--hf_token",
+				process.env.HF_TOKEN ?? "",
+				"--language",
+				"en",
+				"--print_progress",
+				"True",
+				"--threads",
+				"12",
+			].join(" "),
+		);
 		const child = spawn(
 			"whisperx",
 			[
