@@ -1,0 +1,31 @@
+{
+	"name": "scribe",
+	"version": "1.0.0",
+	"description": "",
+	"main": "dist/main.js",
+	"scripts": {
+		"test": "tsc && node ."
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"@types/fluent-ffmpeg": "^2.1.24",
+		"@types/node": "^20.11.5",
+		"eslint": "^8.56.0",
+		"eslint-config-google": "^0.14.0",
+		"eslint-config-prettier": "^9.1.0",
+		"eslint-config-standard-with-typescript": "^43.0.1",
+		"prettier": "^3.2.4",
+		"typescript": "^5.3.3"
+	},
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.496.0",
+		"datakit": "github:TheWANDatabase/datakit",
+		"dotenv": "^16.4.0",
+		"drizzle-orm": "^0.28.6",
+		"fluent-ffmpeg": "^2.1.2",
+		"redis": "^4.6.12",
+		"ytdl-core": "^4.11.5"
+	}
+}
