@@ -47,7 +47,7 @@ redis
 
 				switch (kind) {
 					case "youtube":
-						await downloadVideo(vod);
+						// await downloadVideo(vod);
 						await transcribeAudio(vod);
 				}
 
@@ -94,7 +94,7 @@ async function transcribeAudio(id: string): Promise<void> {
 				"--device",
 				"cuda",
 				"--compute_type",
-				"fp16",
+				"float16",
 				"--output_dir",
 				"transcribed",
 				"--model",
