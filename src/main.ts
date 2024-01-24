@@ -92,9 +92,6 @@ redis
 				const { id, message } = tasks[0] as RedisTask;
 				const { id: episode, kind, vod } = message as TranscriptionTask;
 
-				console.log(
-					`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
-				);
 				const timings = {
 					download: 0,
 					transcribe: 0,
@@ -110,6 +107,9 @@ redis
 				};
 				switch (kind) {
 					case "youtube":
+						console.log(
+							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
+						);
 						timers.download = new Date();
 						await downloadVideo(vod);
 						timings.download = Date.now() - timers.download.getTime();
@@ -218,9 +218,11 @@ redis
 
 						console.log(`> Episode - Done (Took ${toHumanTime(timings.job)})`);
 						break;
+					case "floatplane":
+						await redis.xAck("vods", "whisper", id);
 				}
 
-				process.exit();
+				// process.exit();
 			} catch (e) {
 				console.error(e);
 			}
