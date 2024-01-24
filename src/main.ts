@@ -163,7 +163,6 @@ redis
 							.set({ youtubeCaptions: true })
 							.where(eq(episodeMarkers.id, episode));
 						await redis.xAck("vods", "whisper", id);
-						timings.job = Date.now() - timers.job.getTime();
 						console.clear();
 						console.log(
 							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
@@ -197,6 +196,7 @@ redis
 						if (existsSync(`./transcribed/${vod}.tsv`))
 							unlinkSync(`./transcribed/${vod}.tsv`);
 						console.clear();
+						timings.job = Date.now() - timers.job.getTime();
 						console.log(
 							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
 						);
