@@ -55,7 +55,7 @@ redis
 
 		while (true) {
 			try {
-				const [{ messages: tasks }]: any = await redis.xReadGroup(
+				const response = await redis.xReadGroup(
 					commandOptions({
 						isolated: true,
 					}),
@@ -76,16 +76,43 @@ redis
 					},
 				);
 
-				console.log(tasks[0]);
+				if (response === null) return;
+				const [{ messages: tasks }] = response;
+
 
 				const { id, message } = tasks[0] as RedisTask;
 				const { id: episode, kind, vod } = message as TranscriptionTask;
 
-				console.log(message);
+				console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
+				const timings = {
+					download: 0,
+					transcribe: 0,
+					upload: 0,
+					job: 0
+				}
+
+				const timers = {
+					download: new Date(),
+					transcribe: new Date(),
+					upload: new Date(),
+					job: new Date()
+				}
 				switch (kind) {
 					case "youtube":
+						timers.download = new Date();
 						await downloadVideo(vod);
+						timings.download = Date.now() - timers.download.getTime();
+						console.clear()
+						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
+						console.log(`Download - Done (Took ${toHumanTime(timings.download)}`)
+						timers.transcribe = new Date();
 						await transcribeAudio(vod);
+						timings.transcribe = Date.now() - timers.transcribe.getTime();
+						console.clear()
+						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
+						console.log(`> Download - Done (Took ${toHumanTime(timings.download)}`)
+						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)}`)
+						timers.upload = new Date();
 						await upload(
 							`./transcribed/${vod}.txt`,
 							`transcripts/${episode}_yt.txt`,
@@ -102,11 +129,24 @@ redis
 							`./transcribed/${vod}.srt`,
 							`transcripts/${episode}_yt.srt`,
 						);
+						timings.upload = Date.now() - timers.upload.getTime();
+						console.clear()
+						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
+						console.log(`> Download - Done (Took ${toHumanTime(timings.download)}`)
+						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)}`)
+						console.log(`> Upload - Done (Took ${toHumanTime(timings.download)}`)
 						await db.data
 							.update(episodeMarkers)
 							.set({ youtubeCaptions: true })
 							.where(eq(episodeMarkers.id, episode));
 						await redis.xAck("vods", "whisper", id);
+						timings.job = Date.now() - timers.job.getTime();
+						console.clear()
+						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
+						console.log(`> Download - Done (Took ${toHumanTime(timings.download)}`)
+						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)}`)
+						console.log(`> Upload - Done (Took ${toHumanTime(timings.upload)}`)
+						console.log(`> Episode - Done (Took ${toHumanTime(timings.job)}`)
 						break;
 				}
 
@@ -164,7 +204,7 @@ function downloadVideo(id: string): any {
 
 async function transcribeAudio(id: string): Promise<void> {
 	await new Promise<void>((resolve, reject) => {
-		console.log("> Starting Transcription Process\xb1[35m");
+		console.log("> Starting Transcription Process\x1b[35m");
 		const child = spawn(
 			"whisperx",
 			[
@@ -209,4 +249,22 @@ async function transcribeAudio(id: string): Promise<void> {
 			reject(e);
 		});
 	});
+}
+
+
+function toHumanTime(total: number):string {
+	total = Math.abs(total)
+	const seconds = Math.floor((total) % 60);
+	const minutes = Math.floor((total / 60) % 60);
+	const hours = Math.floor((total / (60 * 60)) % 24);
+	const days = Math.floor(total / (60 * 60 * 24));
+	let result = '';
+
+	if(days > 0) result += (days > 9 ? days : ('0'+days)) + ':' 
+	if(hours > 0) result += (hours > 9 ? hours : ('0'+hours)) + ':' 
+	
+	result += (minutes > 9 ? minutes : ('0'+minutes)) + ':'
+	result += (seconds > 9 ? seconds : ('0'+seconds))
+
+	return result
 }
