@@ -22,7 +22,6 @@ const s3Config: any = {
 	},
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 const s3 = new S3Client(s3Config);
 
 const redis = createClient({
