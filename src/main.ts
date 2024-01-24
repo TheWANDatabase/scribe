@@ -3,7 +3,7 @@ import { spawn } from "child_process";
 import { commandOptions, createClient } from "redis";
 import { Client } from "datakit";
 import ffmpeg from "fluent-ffmpeg";
-import { mkdirSync } from "fs";
+import { existsSync, mkdirSync } from "fs";
 import ytdl from "ytdl-core";
 
 const redis = createClient({
@@ -48,7 +48,7 @@ redis
 				console.log(message);
 				switch (kind) {
 					case "youtube":
-						// await downloadVideo(vod);
+						await downloadVideo(vod);
 						await transcribeAudio(vod);
 						process.exit();
 				}
@@ -64,6 +64,10 @@ redis
 function downloadVideo(id: string): any {
 	return new Promise<void>((resolve, reject) => {
 		try {
+			if (existsSync(`./audio/${id}.mp3`)) {
+				resolve();
+				return;
+			}
 			console.log("> Downloading VOD");
 			const stream = ytdl(id, {
 				quality: "highestaudio",
