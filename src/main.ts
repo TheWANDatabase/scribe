@@ -49,9 +49,12 @@ interface RedisTask {
 redis
 	.connect()
 	.then(async () => {
+		console.log("Configuring xGroups")
 		await redis.xGroupCreate("vods", "whisper", "0", {
 			MKSTREAM: true,
 		});
+
+		console.log("Starting event stream loop")
 
 		while (true) {
 			try {
@@ -75,7 +78,7 @@ redis
 						BLOCK: 5000,
 					},
 				);
-
+				console.log(response);
 				if (response === null) return;
 				const [{ messages: tasks }] = response;
 
