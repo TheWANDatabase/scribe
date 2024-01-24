@@ -107,14 +107,14 @@ redis
 						timings.download = Date.now() - timers.download.getTime();
 						console.clear()
 						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-						console.log(`Download - Done (Took ${toHumanTime(timings.download)}`)
+						console.log(`Download - Done (Took ${toHumanTime(timings.download)})`)
 						timers.transcribe = new Date();
 						await transcribeAudio(vod);
 						timings.transcribe = Date.now() - timers.transcribe.getTime();
 						console.clear()
 						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-						console.log(`> Download - Done (Took ${toHumanTime(timings.download)}`)
-						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)}`)
+						console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
+						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)})`)
 						timers.upload = new Date();
 						await upload(
 							`./transcribed/${vod}.txt`,
@@ -135,9 +135,9 @@ redis
 						timings.upload = Date.now() - timers.upload.getTime();
 						console.clear()
 						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-						console.log(`> Download - Done (Took ${toHumanTime(timings.download)}`)
-						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)}`)
-						console.log(`> Upload - Done (Took ${toHumanTime(timings.download)}`)
+						console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
+						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)})`)
+						console.log(`> Upload - Done (Took ${toHumanTime(timings.download)})`)
 						await db.data
 							.update(episodeMarkers)
 							.set({ youtubeCaptions: true })
@@ -146,10 +146,10 @@ redis
 						timings.job = Date.now() - timers.job.getTime();
 						console.clear()
 						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-						console.log(`> Download - Done (Took ${toHumanTime(timings.download)}`)
-						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)}`)
-						console.log(`> Upload - Done (Took ${toHumanTime(timings.upload)}`)
-						console.log(`> Episode - Done (Took ${toHumanTime(timings.job)}`)
+						console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
+						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)})`)
+						console.log(`> Upload - Done (Took ${toHumanTime(timings.upload)})`)
+						console.log(`> Episode - Done (Took ${toHumanTime(timings.job)})`)
 						break;
 				}
 
