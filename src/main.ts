@@ -50,10 +50,14 @@ interface RedisTask {
 redis
 	.connect()
 	.then(async () => {
-		console.log("Configuring xGroups");
-		// await redis.xGroupCreate("vods", "whisper", "0", {
-		// 	MKSTREAM: false,
-		// });
+		const makeGroup = (await redis.exists("vods")) === 0;
+
+		if (makeGroup) {
+			console.log("Configuring xGroups");
+			await redis.xGroupCreate("vods", "whisper", "0", {
+				MKSTREAM: true,
+			});
+		}
 
 		console.log("Starting event stream loop");
 
@@ -79,8 +83,10 @@ redis
 						BLOCK: 5000,
 					},
 				);
-				console.log(response);
-				if (response === null) continue;
+				if (response === null) {
+					console.log("Queue empty. Checking again shortly...");
+					continue;
+				}
 				const [{ messages: tasks }] = response;
 
 				const { id, message } = tasks[0] as RedisTask;
