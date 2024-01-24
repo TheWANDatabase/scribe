@@ -103,13 +103,13 @@ redis
 				switch (kind) {
 					case "youtube":
 						timers.download = new Date();
-						await downloadVideo(vod);
+						// await downloadVideo(vod);
 						timings.download = Date.now() - timers.download.getTime();
 						console.clear()
 						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
 						console.log(`Download - Done (Took ${toHumanTime(timings.download)})`)
 						timers.transcribe = new Date();
-						await transcribeAudio(vod);
+						// await transcribeAudio(vod);
 						timings.transcribe = Date.now() - timers.transcribe.getTime();
 						console.clear()
 						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
@@ -132,25 +132,25 @@ redis
 							`./transcribed/${vod}.srt`,
 							`transcripts/${episode}_yt.srt`,
 						);
-						timings.upload = Date.now() - timers.upload.getTime();
-						console.clear()
-						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-						console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
-						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)})`)
-						console.log(`> Upload - Done (Took ${toHumanTime(timings.download)})`)
-						await db.data
-							.update(episodeMarkers)
-							.set({ youtubeCaptions: true })
-							.where(eq(episodeMarkers.id, episode));
-						await redis.xAck("vods", "whisper", id);
-						timings.job = Date.now() - timers.job.getTime();
-						console.clear()
-						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-						console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
-						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)})`)
-						console.log(`> Upload - Done (Took ${toHumanTime(timings.upload)})`)
-						console.log(`> Episode - Done (Took ${toHumanTime(timings.job)})`)
-						break;
+						// timings.upload = Date.now() - timers.upload.getTime();
+						// console.clear()
+						// console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
+						// console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
+						// console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)})`)
+						// console.log(`> Upload - Done (Took ${toHumanTime(timings.download)})`)
+						// await db.data
+						// 	.update(episodeMarkers)
+						// 	.set({ youtubeCaptions: true })
+						// 	.where(eq(episodeMarkers.id, episode));
+						// await redis.xAck("vods", "whisper", id);
+						// timings.job = Date.now() - timers.job.getTime();
+						// console.clear()
+						// console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
+						// console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
+						// console.log(`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)})`)
+						// console.log(`> Upload - Done (Took ${toHumanTime(timings.upload)})`)
+						// console.log(`> Episode - Done (Took ${toHumanTime(timings.job)})`)
+						// break;
 				}
 
 				process.exit();
