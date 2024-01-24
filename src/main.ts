@@ -105,6 +105,11 @@ redis
 					upload: new Date(),
 					job: new Date(),
 				};
+
+				const trace = await redis.get(`vods:${vod}`);
+
+				console.log(trace);
+				process.exit();
 				switch (kind) {
 					case "youtube":
 						console.log(
