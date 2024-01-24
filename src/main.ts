@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import "dotenv/config";
 import { spawn } from "child_process";
 import { commandOptions, createClient } from "redis";
@@ -92,13 +93,6 @@ redis
 				const { id, message } = tasks[0] as RedisTask;
 				const { id: episode, kind, vod } = message as TranscriptionTask;
 
-				const timings = {
-					download: 0,
-					transcribe: 0,
-					upload: 0,
-					job: 0,
-				};
-
 				const timers = {
 					download: new Date(),
 					transcribe: new Date(),
@@ -106,10 +100,8 @@ redis
 					job: new Date(),
 				};
 
-				const trace = await redis.get(`vods:${vod}`);
+				const trace: any = JSON.parse((await redis.get(`vods:${vod}`)) ?? "{}");
 
-				console.log(trace);
-				process.exit();
 				switch (kind) {
 					case "youtube":
 						console.log(
@@ -117,26 +109,26 @@ redis
 						);
 						timers.download = new Date();
 						await downloadVideo(vod);
-						timings.download = Date.now() - timers.download.getTime();
+						trace.timings.download = Date.now() - timers.download.getTime();
 						console.clear();
 						console.log(
 							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
 						);
 						console.log(
-							`Download - Done (Took ${toHumanTime(timings.download)})`,
+							`Download - Done (Took ${toHumanTime(trace.timings.download)})`,
 						);
 						timers.transcribe = new Date();
 						await transcribeAudio(vod);
-						timings.transcribe = Date.now() - timers.transcribe.getTime();
+						trace.timings.transcribe = Date.now() - timers.transcribe.getTime();
 						console.clear();
 						console.log(
 							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
 						);
 						console.log(
-							`> Download - Done (Took ${toHumanTime(timings.download)})`,
+							`> Download - Done (Took ${toHumanTime(trace.timings.download)})`,
 						);
 						console.log(
-							`> Transcribe - Done (Took ${toHumanTime(timings.download)})`,
+							`> Transcribe - Done (Took ${toHumanTime(trace.timings.download)})`,
 						);
 						timers.upload = new Date();
 						await upload(
@@ -155,19 +147,19 @@ redis
 							`./transcribed/${vod}.srt`,
 							`transcripts/${episode}_yt.srt`,
 						);
-						timings.upload = Date.now() - timers.upload.getTime();
+						trace.timings.upload = Date.now() - timers.upload.getTime();
 						console.clear();
 						console.log(
 							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
 						);
 						console.log(
-							`> Download - Done (Took ${toHumanTime(timings.download)})`,
+							`> Download - Done (Took ${toHumanTime(trace.timings.download)})`,
 						);
 						console.log(
-							`> Transcribe - Done (Took ${toHumanTime(timings.download)})`,
+							`> Transcribe - Done (Took ${toHumanTime(trace.timings.download)})`,
 						);
 						console.log(
-							`> Upload - Done (Took ${toHumanTime(timings.download)})`,
+							`> Upload - Done (Took ${toHumanTime(trace.timings.download)})`,
 						);
 						await db.data
 							.update(episodeMarkers)
@@ -179,13 +171,13 @@ redis
 							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
 						);
 						console.log(
-							`> Download - Done (Took ${toHumanTime(timings.download)})`,
+							`> Download - Done (Took ${toHumanTime(trace.timings.download)})`,
 						);
 						console.log(
-							`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)})`,
+							`> Transcribe - Done (Took ${toHumanTime(trace.timings.transcribe)})`,
 						);
 						console.log(
-							`> Upload - Done (Took ${toHumanTime(timings.upload)})`,
+							`> Upload - Done (Took ${toHumanTime(trace.timings.upload)})`,
 						);
 						console.log("> Cleaning up....");
 						console.log(`  > ./audio/${vod}.mp3`);
@@ -207,25 +199,29 @@ redis
 						if (existsSync(`./transcribed/${vod}.tsv`))
 							unlinkSync(`./transcribed/${vod}.tsv`);
 						console.clear();
-						timings.job = Date.now() - timers.job.getTime();
+						trace.timings.job = Date.now() - timers.job.getTime();
 						console.log(
 							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
 						);
 						console.log(
-							`> Download - Done (Took ${toHumanTime(timings.download)})`,
+							`> Download - Done (Took ${toHumanTime(trace.timings.download)})`,
 						);
 						console.log(
-							`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)})`,
+							`> Transcribe - Done (Took ${toHumanTime(trace.timings.transcribe)})`,
 						);
 						console.log(
-							`> Upload - Done (Took ${toHumanTime(timings.upload)})`,
+							`> Upload - Done (Took ${toHumanTime(trace.timings.upload)})`,
 						);
 
-						console.log(`> Episode - Done (Took ${toHumanTime(timings.job)})`);
+						console.log(
+							`> Episode - Done (Took ${toHumanTime(trace.timings.job)})`,
+						);
 						break;
 					case "floatplane":
 						await redis.xAck("vods", "whisper", id);
 				}
+
+				await redis.set(`vods:${vod}`, JSON.stringify(trace));
 			} catch (e) {
 				console.error(e);
 			}
