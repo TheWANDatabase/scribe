@@ -52,6 +52,8 @@ redis
 						await transcribeAudio(vod);
 						process.exit();
 				}
+
+				await redis.xAck("vods", "transcode", tasks[0].id as string);
 			} catch (e) {
 				console.error(e);
 			}
