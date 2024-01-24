@@ -79,7 +79,7 @@ redis
 					},
 				);
 				console.log(response);
-				if (response === null) return;
+				if (response === null) continue;
 				const [{ messages: tasks }] = response;
 
 
