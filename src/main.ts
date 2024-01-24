@@ -221,8 +221,6 @@ redis
 					case "floatplane":
 						await redis.xAck("vods", "whisper", id);
 				}
-
-				// process.exit();
 			} catch (e) {
 				console.error(e);
 			}
