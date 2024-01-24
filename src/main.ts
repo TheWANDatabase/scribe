@@ -3,13 +3,12 @@ import { spawn } from "child_process";
 import { commandOptions, createClient } from "redis";
 import { Client, episodeMarkers } from "datakit";
 import ffmpeg from "fluent-ffmpeg";
-import { existsSync, mkdirSync, readFileSync, statSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync } from "fs";
 import ytdl from "ytdl-core";
 import {
 	type PutObjectCommandOutput,
 	PutObjectCommand,
 	S3Client,
-	S3ClientConfig,
 } from "@aws-sdk/client-s3";
 import { eq } from "drizzle-orm";
 
@@ -106,7 +105,7 @@ redis
 				switch (kind) {
 					case "youtube":
 						timers.download = new Date();
-						// await downloadVideo(vod);
+						await downloadVideo(vod);
 						timings.download = Date.now() - timers.download.getTime();
 						console.clear();
 						console.log(
@@ -116,7 +115,7 @@ redis
 							`Download - Done (Took ${toHumanTime(timings.download)})`,
 						);
 						timers.transcribe = new Date();
-						// await transcribeAudio(vod);
+						await transcribeAudio(vod);
 						timings.transcribe = Date.now() - timers.transcribe.getTime();
 						console.clear();
 						console.log(
@@ -145,25 +144,74 @@ redis
 							`./transcribed/${vod}.srt`,
 							`transcripts/${episode}_yt.srt`,
 						);
-					// timings.upload = Date.now() - timers.upload.getTime();
-					// console.clear()
-					// console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-					// console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
-					// console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)})`)
-					// console.log(`> Upload - Done (Took ${toHumanTime(timings.download)})`)
-					// await db.data
-					// 	.update(episodeMarkers)
-					// 	.set({ youtubeCaptions: true })
-					// 	.where(eq(episodeMarkers.id, episode));
-					// await redis.xAck("vods", "whisper", id);
-					// timings.job = Date.now() - timers.job.getTime();
-					// console.clear()
-					// console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-					// console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
-					// console.log(`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)})`)
-					// console.log(`> Upload - Done (Took ${toHumanTime(timings.upload)})`)
-					// console.log(`> Episode - Done (Took ${toHumanTime(timings.job)})`)
-					// break;
+						timings.upload = Date.now() - timers.upload.getTime();
+						console.clear();
+						console.log(
+							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
+						);
+						console.log(
+							`> Download - Done (Took ${toHumanTime(timings.download)})`,
+						);
+						console.log(
+							`> Transcribe - Done (Took ${toHumanTime(timings.download)})`,
+						);
+						console.log(
+							`> Upload - Done (Took ${toHumanTime(timings.download)})`,
+						);
+						await db.data
+							.update(episodeMarkers)
+							.set({ youtubeCaptions: true })
+							.where(eq(episodeMarkers.id, episode));
+						await redis.xAck("vods", "whisper", id);
+						timings.job = Date.now() - timers.job.getTime();
+						console.clear();
+						console.log(
+							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
+						);
+						console.log(
+							`> Download - Done (Took ${toHumanTime(timings.download)})`,
+						);
+						console.log(
+							`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)})`,
+						);
+						console.log(
+							`> Upload - Done (Took ${toHumanTime(timings.upload)})`,
+						);
+						console.log("> Cleaning up....");
+						console.log(`  > ./audio/${vod}.mp3`);
+						if (existsSync(`./audio/${vod}.mp3`))
+							unlinkSync(`./audio/${vod}.mp3`);
+						console.log(`  > ./transcribed/${vod}.json`);
+						if (existsSync(`./transcribed/${vod}.json`))
+							unlinkSync(`./transcribed/${vod}.json`);
+						console.log(`  > ./transcribed/${vod}.vtt`);
+						if (existsSync(`./transcribed/${vod}.vtt`))
+							unlinkSync(`./transcribed/${vod}.vtt`);
+						console.log(`  > ./transcribed/${vod}.srt`);
+						if (existsSync(`./transcribed/${vod}.srt`))
+							unlinkSync(`./transcribed/${vod}.srt`);
+						console.log(`  > ./transcribed/${vod}.txt`);
+						if (existsSync(`./transcribed/${vod}.txt`))
+							unlinkSync(`./transcribed/${vod}.txt`);
+						console.log(`  > ./transcribed/${vod}.tsv`);
+						if (existsSync(`./transcribed/${vod}.tsv`))
+							unlinkSync(`./transcribed/${vod}.tsv`);
+						console.clear();
+						console.log(
+							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
+						);
+						console.log(
+							`> Download - Done (Took ${toHumanTime(timings.download)})`,
+						);
+						console.log(
+							`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)})`,
+						);
+						console.log(
+							`> Upload - Done (Took ${toHumanTime(timings.upload)})`,
+						);
+
+						console.log(`> Episode - Done (Took ${toHumanTime(timings.job)})`);
+						break;
 				}
 
 				process.exit();
@@ -221,6 +269,12 @@ function downloadVideo(id: string): any {
 async function transcribeAudio(id: string): Promise<void> {
 	await new Promise<void>((resolve, reject) => {
 		console.log("> Starting Transcription Process\x1b[35m");
+
+		if (existsSync(`./transcribed/${id}.vtt`)) {
+			resolve();
+			return;
+		}
+
 		const child = spawn(
 			"whisperx",
 			[
