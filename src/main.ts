@@ -9,19 +9,21 @@ import {
 	type PutObjectCommandOutput,
 	PutObjectCommand,
 	S3Client,
+	S3ClientConfig,
 } from "@aws-sdk/client-s3";
 import { eq } from "drizzle-orm";
 
-const s3 = new S3Client([
-	{
-		region: "auto",
-		endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-		credentials: {
-			accessKeyId: process.env.CF_ACCESS_KEY_ID,
-			secretAccessKey: process.env.CF_SECRET_ACCESS_KEY,
-		},
+const s3Config: any = {
+	region: "auto",
+	endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+	credentials: {
+		accessKeyId: process.env.CF_ACCESS_KEY_ID,
+		secretAccessKey: process.env.CF_SECRET_ACCESS_KEY,
 	},
-]);
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+const s3 = new S3Client(s3Config);
 
 const redis = createClient({
 	username: process.env.REDIS_USER,
@@ -49,12 +51,12 @@ interface RedisTask {
 redis
 	.connect()
 	.then(async () => {
-		console.log("Configuring xGroups")
+		console.log("Configuring xGroups");
 		// await redis.xGroupCreate("vods", "whisper", "0", {
 		// 	MKSTREAM: false,
 		// });
 
-		console.log("Starting event stream loop")
+		console.log("Starting event stream loop");
 
 		while (true) {
 			try {
@@ -82,39 +84,50 @@ redis
 				if (response === null) continue;
 				const [{ messages: tasks }] = response;
 
-
 				const { id, message } = tasks[0] as RedisTask;
 				const { id: episode, kind, vod } = message as TranscriptionTask;
 
-				console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
+				console.log(
+					`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
+				);
 				const timings = {
 					download: 0,
 					transcribe: 0,
 					upload: 0,
-					job: 0
-				}
+					job: 0,
+				};
 
 				const timers = {
 					download: new Date(),
 					transcribe: new Date(),
 					upload: new Date(),
-					job: new Date()
-				}
+					job: new Date(),
+				};
 				switch (kind) {
 					case "youtube":
 						timers.download = new Date();
 						// await downloadVideo(vod);
 						timings.download = Date.now() - timers.download.getTime();
-						console.clear()
-						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-						console.log(`Download - Done (Took ${toHumanTime(timings.download)})`)
+						console.clear();
+						console.log(
+							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
+						);
+						console.log(
+							`Download - Done (Took ${toHumanTime(timings.download)})`,
+						);
 						timers.transcribe = new Date();
 						// await transcribeAudio(vod);
 						timings.transcribe = Date.now() - timers.transcribe.getTime();
-						console.clear()
-						console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-						console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
-						console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)})`)
+						console.clear();
+						console.log(
+							`Starting transcript job for episode ${episode} (Job Type: ${kind})`,
+						);
+						console.log(
+							`> Download - Done (Took ${toHumanTime(timings.download)})`,
+						);
+						console.log(
+							`> Transcribe - Done (Took ${toHumanTime(timings.download)})`,
+						);
 						timers.upload = new Date();
 						await upload(
 							`./transcribed/${vod}.txt`,
@@ -132,25 +145,25 @@ redis
 							`./transcribed/${vod}.srt`,
 							`transcripts/${episode}_yt.srt`,
 						);
-						// timings.upload = Date.now() - timers.upload.getTime();
-						// console.clear()
-						// console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-						// console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
-						// console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)})`)
-						// console.log(`> Upload - Done (Took ${toHumanTime(timings.download)})`)
-						// await db.data
-						// 	.update(episodeMarkers)
-						// 	.set({ youtubeCaptions: true })
-						// 	.where(eq(episodeMarkers.id, episode));
-						// await redis.xAck("vods", "whisper", id);
-						// timings.job = Date.now() - timers.job.getTime();
-						// console.clear()
-						// console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
-						// console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
-						// console.log(`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)})`)
-						// console.log(`> Upload - Done (Took ${toHumanTime(timings.upload)})`)
-						// console.log(`> Episode - Done (Took ${toHumanTime(timings.job)})`)
-						// break;
+					// timings.upload = Date.now() - timers.upload.getTime();
+					// console.clear()
+					// console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
+					// console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
+					// console.log(`> Transcribe - Done (Took ${toHumanTime(timings.download)})`)
+					// console.log(`> Upload - Done (Took ${toHumanTime(timings.download)})`)
+					// await db.data
+					// 	.update(episodeMarkers)
+					// 	.set({ youtubeCaptions: true })
+					// 	.where(eq(episodeMarkers.id, episode));
+					// await redis.xAck("vods", "whisper", id);
+					// timings.job = Date.now() - timers.job.getTime();
+					// console.clear()
+					// console.log(`Starting transcript job for episode ${episode} (Job Type: ${kind})`);
+					// console.log(`> Download - Done (Took ${toHumanTime(timings.download)})`)
+					// console.log(`> Transcribe - Done (Took ${toHumanTime(timings.transcribe)})`)
+					// console.log(`> Upload - Done (Took ${toHumanTime(timings.upload)})`)
+					// console.log(`> Episode - Done (Took ${toHumanTime(timings.job)})`)
+					// break;
 				}
 
 				process.exit();
@@ -254,20 +267,19 @@ async function transcribeAudio(id: string): Promise<void> {
 	});
 }
 
-
-function toHumanTime(total: number):string {
-	total = Math.abs(total)
-	const seconds = Math.floor((total) % 60);
+function toHumanTime(total: number): string {
+	total = Math.abs(total);
+	const seconds = Math.floor(total % 60);
 	const minutes = Math.floor((total / 60) % 60);
 	const hours = Math.floor((total / (60 * 60)) % 24);
 	const days = Math.floor(total / (60 * 60 * 24));
-	let result = '';
+	let result = "";
 
-	if(days > 0) result += (days > 9 ? days : ('0'+days)) + ':' 
-	if(hours > 0) result += (hours > 9 ? hours : ('0'+hours)) + ':' 
-	
-	result += (minutes > 9 ? minutes : ('0'+minutes)) + ':'
-	result += (seconds > 9 ? seconds : ('0'+seconds))
+	if (days > 0) result += (days > 9 ? days : "0" + days) + ":";
+	if (hours > 0) result += (hours > 9 ? hours : "0" + hours) + ":";
 
-	return result
+	result += (minutes > 9 ? minutes : "0" + minutes) + ":";
+	result += seconds > 9 ? seconds : "0" + seconds;
+
+	return result;
 }
