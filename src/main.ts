@@ -3,7 +3,7 @@ import { spawn } from "child_process";
 import { commandOptions, createClient } from "redis";
 import { Client } from "datakit";
 import ffmpeg from "fluent-ffmpeg";
-import { mkdirSync, createWriteStream } from "fs";
+import { mkdirSync } from "fs";
 import ytdl from "ytdl-core";
 
 const redis = createClient({
@@ -45,13 +45,13 @@ redis
 				const { message }: { message: TranscriptionTask } = tasks[0];
 				const { id: episode, kind, vod } = message;
 
+				console.log(message);
 				switch (kind) {
 					case "youtube":
 						// await downloadVideo(vod);
 						await transcribeAudio(vod);
+						process.exit();
 				}
-
-				process.exit();
 			} catch (e) {
 				console.error(e);
 			}
