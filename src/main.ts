@@ -50,9 +50,9 @@ redis
 	.connect()
 	.then(async () => {
 		console.log("Configuring xGroups")
-		await redis.xGroupCreate("vods", "whisper", "0", {
-			MKSTREAM: true,
-		});
+		// await redis.xGroupCreate("vods", "whisper", "0", {
+		// 	MKSTREAM: false,
+		// });
 
 		console.log("Starting event stream loop")
 
