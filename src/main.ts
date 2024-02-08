@@ -2,7 +2,7 @@
 import "dotenv/config";
 import { spawn } from "child_process";
 import { commandOptions, createClient } from "redis";
-import { Client, episodeMarkers } from "datakit";
+import {Client, episodes} from "datakit";
 import ffmpeg from "fluent-ffmpeg";
 import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync } from "fs";
 import ytdl from "ytdl-core";
@@ -161,9 +161,9 @@ redis
 							`> Upload - Done (Took ${toHumanTime(trace.timings.download)})`,
 						);
 						await db.data
-							.update(episodeMarkers)
+							.update(episodes)
 							.set({ youtubeCaptions: true })
-							.where(eq(episodeMarkers.id, episode));
+							.where(eq(episodes.id, episode));
 						await redis.xAck("vods", "whisper", id);
 						console.clear();
 						console.log(
